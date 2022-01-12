@@ -12,10 +12,13 @@ exports.getAllProducts = (req, res) => {
 };
 
 exports.getProduct = (req, res) => {
-  const id = req.params.id;
   db.query(
-    'SELECT * FROM public."Products" WHERE id = $1',
-    [id],
+    `SELECT p.*,  json_agg(json_build_object('feature', f.feature, 'value', f.value)) as features
+    FROM public."Products" as p
+    LEFT JOIN public."Features" as f ON f.product_id = p.id
+    WHERE p.id = $1
+    GROUP BY p.id`,
+    [req.params.id],
     handleRes(res)
   );
 };

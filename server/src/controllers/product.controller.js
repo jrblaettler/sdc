@@ -22,3 +22,12 @@ exports.getProduct = (req, res) => {
     handleRes(res)
   );
 };
+
+exports.getRelatedIds = (req, res) => {
+  console.log(req.params.id);
+  db.query(
+    `SELECT array_agg(related_product_id) related FROM public."Related" WHERE current_product_id = $1`,
+    [req.params.id],
+    handleRes(res)
+  );
+};

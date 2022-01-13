@@ -6,7 +6,8 @@ const handleRes = res => (err, data) => {
 
 exports.getAllProducts = (req, res) => {
   db.query(
-    'SELECT * FROM public."Products" ORDER BY id ASC LIMIT 100',
+    'SELECT * FROM public."Products" ORDER BY id ASC LIMIT $1',
+    [req.params.count || 5],
     handleRes(res)
   );
 };

@@ -24,9 +24,20 @@ exports.getProduct = (req, res) => {
 };
 
 exports.getRelatedIds = (req, res) => {
-  console.log(req.params.id);
   db.query(
     `SELECT array_agg(related_product_id) related FROM public."Related" WHERE current_product_id = $1`,
+    [req.params.id],
+    handleRes(res)
+  );
+};
+
+exports.getStyles = (req, res) => {
+  db.query(
+    `SELECT s.*, json_agg(json_build_object('thumbnail_url', p.thumbnail_url, 'url', p.url)) as photos
+    FROM public."Styles" as s
+    LEFT JOIN public."Photos" as p ON p."styleId" = s.id
+    WHERE s."productId" = $1
+    GROUP BY s.id`,
     [req.params.id],
     handleRes(res)
   );

@@ -34,9 +34,12 @@ exports.getRelatedIds = (req, res) => {
 
 exports.getStyles = (req, res) => {
   db.query(
-    `SELECT s.*, json_agg(json_build_object('thumbnail_url', p.thumbnail_url, 'url', p.url)) as photos
+    `SELECT s.*,
+    json_agg(DISTINCT jsonb_build_object('thumbnail_url', p.thumbnail_url, 'url', p.url)) as photos,
+    jsonb_object_agg(DISTINCT sk.id, jsonb_build_object('quantity', sk.quantity, 'size', sk.size)) as skus
     FROM public."Styles" as s
     LEFT JOIN public."Photos" as p ON p."styleId" = s.id
+    LEFT JOIN public."Skus" as sk ON sk."styleId" = s.id
     WHERE s."productId" = $1
     GROUP BY s.id`,
     [req.params.id],

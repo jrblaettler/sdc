@@ -7,7 +7,7 @@ const handleRes = res => (err, data) => {
 exports.getAllProducts = (req, res) => {
   db.query(
     'SELECT * FROM public."Products" ORDER BY id ASC LIMIT $1',
-    [req.params.count || 5],
+    [req.query.count || 5],
     handleRes(res)
   );
 };
@@ -36,13 +36,29 @@ exports.getStyles = (req, res) => {
   db.query(
     `SELECT s.*,
     json_agg(DISTINCT jsonb_build_object('thumbnail_url', p.thumbnail_url, 'url', p.url)) as photos,
-    jsonb_object_agg(DISTINCT sk.id, jsonb_build_object('quantity', sk.quantity, 'size', sk.size)) as skus
+    jsonb_object_agg(DISTINCT COALESCE(sk.id::VARCHAR, 'null'), jsonb_build_object('quantity', sk.quantity, 'size', sk.size)) as skus
     FROM public."Styles" as s
     LEFT JOIN public."Photos" as p ON p."styleId" = s.id
     LEFT JOIN public."Skus" as sk ON sk."styleId" = s.id
     WHERE s."productId" = $1
     GROUP BY s.id`,
     [req.params.id],
-    handleRes(res)
+    (err, { rows }) => {
+      const data = {
+        product_id: rows[0].productId,
+        results: rows.map(row => {
+          return {
+            style_id: row.id,
+            name: row.name,
+            original_price: row.original_price,
+            sale_price: row.sale_price,
+            'default?': row.default_style,
+            photos: row.photos,
+            skus: row.skus,
+          };
+        }),
+      };
+      res.status(200).send(data);
+    }
   );
 };
